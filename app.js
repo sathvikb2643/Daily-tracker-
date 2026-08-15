@@ -1,77 +1,50 @@
-/* =========================================
-   DEFAULT DATA
-========================================= */
+import { db } from "./firebase.js";
 
-const defaultData = {
-
-    salary: 35000,
-
-    expenses: [
-        {
-            id: 1,
-            name: "Food",
-            amount: 4000
-        },
-        {
-            id: 2,
-            name: "Travel",
-            amount: 2500
-        }
-    ],
-
-    leaves: {
-        total: 24,
-        used: 4
-    },
-
-    holidays: [
-        {
-            id: 1,
-            name: "Independence Day",
-            date: "2026-08-15"
-        }
-    ],
-
-    tasks: [
-        {
-            id: 1,
-            name: "Complete Python practice",
-            date: "2026-08-16"
-        },
-        {
-            id: 2,
-            name: "Update resume",
-            date: "2026-08-18"
-        }
-    ]
-
-};
+import {
+    doc,
+    getDoc,
+    setDoc,
+    updateDoc,
+    collection,
+    addDoc,
+    deleteDoc,
+    onSnapshot
+}
+from
+"https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 
 /* =========================================
-   LOAD DATA
+   FIRESTORE
 ========================================= */
 
-let data =
-    JSON.parse(localStorage.getItem("dailyTrackerData"))
-    || defaultData;
+const trackerRef =
+    doc(db, "tracker", "main");
 
 
-function saveData() {
-
-    localStorage.setItem(
-        "dailyTrackerData",
-        JSON.stringify(data)
+const expensesRef =
+    collection(
+        db,
+        "tracker",
+        "main",
+        "expenses"
     );
 
-}
+
+/* =========================================
+   DATA
+========================================= */
+
+let salary = 0;
+
+let expenses = [];
 
 
 /* =========================================
-   FORMAT CURRENCY
+   CURRENCY
 ========================================= */
 
-function currency(amount) {
+function currency(value) {
 
     return new Intl.NumberFormat(
         "en-IN",
@@ -80,7 +53,7 @@ function currency(amount) {
             currency: "INR",
             maximumFractionDigits: 0
         }
-    ).format(amount);
+    ).format(value);
 
 }
 
@@ -91,140 +64,216 @@ function currency(amount) {
 
 function formatDate(date) {
 
-    if (!date) return "";
+    if (!date)
+        return "";
 
-    return new Date(date + "T00:00:00")
-        .toLocaleDateString(
-            "en-IN",
-            {
-                day: "numeric",
-                month: "short",
-                year: "numeric"
-            }
-        );
+    return new Date(
+        date
+    ).toLocaleDateString(
+        "en-IN",
+        {
+            day: "numeric",
+            month: "short",
+            year: "numeric"
+        }
+    );
 
 }
 
 
 /* =========================================
-   HOME PAGE
+   SECURITY
 ========================================= */
 
-function loadHome() {
+function escapeHTML(value) {
 
-    if (!document.getElementById("expenseChart"))
-        return;
+    return String(value)
 
+        .replace(/&/g, "&amp;")
+
+        .replace(/</g, "&lt;")
+
+        .replace(/>/g, "&gt;")
+
+        .replace(/"/g, "&quot;")
+
+        .replace(/'/g, "&#039;");
+
+}
+
+
+/* =========================================
+   INITIALIZE
+========================================= */
+
+async function initialize() {
+
+    const snapshot =
+        await getDoc(trackerRef);
+
+
+    if (!snapshot.exists()) {
+
+        await setDoc(
+            trackerRef,
+            {
+                salary: 0
+            }
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   SALARY LISTENER
+========================================= */
+
+onSnapshot(
+    trackerRef,
+    snapshot => {
+
+        if (!snapshot.exists())
+            return;
+
+
+        salary =
+            Number(
+                snapshot.data().salary || 0
+            );
+
+
+        updateSalaryUI();
+
+        updateSalaryInput();
+
+    }
+);
+
+
+/* =========================================
+   EXPENSE LISTENER
+========================================= */
+
+onSnapshot(
+    expensesRef,
+    snapshot => {
+
+        expenses =
+            snapshot.docs.map(
+                item => ({
+
+                    id: item.id,
+
+                    ...item.data()
+
+                })
+            );
+
+
+        updateHome();
+
+        loadAdminExpenses();
+
+    }
+);
+
+
+/* =========================================
+   SALARY UI
+========================================= */
+
+function updateSalaryUI() {
+
+    const element =
+        document.getElementById(
+            "salaryAmount"
+        );
+
+
+    if (element)
+        element.textContent =
+            currency(salary);
+
+}
+
+
+/* =========================================
+   UPDATE HOME
+========================================= */
+
+function updateHome() {
 
     const totalExpenses =
-        data.expenses.reduce(
-            (sum, item) => sum + Number(item.amount),
+        expenses.reduce(
+            (sum, item) =>
+                sum +
+                Number(item.amount || 0),
             0
         );
 
 
-    const remaining =
+    const balance =
         Math.max(
             0,
-            Number(data.salary) - totalExpenses
+            salary - totalExpenses
         );
 
 
-    const remainingLeaves =
-        Math.max(
-            0,
-            Number(data.leaves.total) -
-            Number(data.leaves.used)
+    const expenseElement =
+        document.getElementById(
+            "expenseAmount"
         );
 
 
-    /* SUMMARY */
-
-    document.getElementById("salaryAmount")
-        .textContent = currency(data.salary);
-
-
-    document.getElementById("expenseAmount")
-        .textContent = currency(totalExpenses);
-
-
-    document.getElementById("remainingAmount")
-        .textContent = currency(remaining);
-
-
-    document.getElementById("taskCount")
-        .textContent = data.tasks.length;
-
-
-    /* CHART INFO */
-
-    document.getElementById("chartSalary")
-        .textContent = currency(data.salary);
-
-
-    document.getElementById("chartExpenses")
-        .textContent = currency(totalExpenses);
-
-
-    document.getElementById("remainingLeaves")
-        .textContent = remainingLeaves;
-
-
-    document.getElementById("usedLeaves")
-        .textContent = data.leaves.used;
-
-
-    document.getElementById("leaveLeftText")
-        .textContent = remainingLeaves;
-
-
-    /* DATE */
-
-    const today = new Date();
-
-    document.getElementById("currentDate")
-        .textContent =
-        today.toLocaleDateString(
-            "en-IN",
-            {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric"
-            }
+    const balanceElement =
+        document.getElementById(
+            "balanceAmount"
         );
 
 
-    createExpenseChart(
-        data.salary,
+    if (expenseElement)
+        expenseElement.textContent =
+            currency(totalExpenses);
+
+
+    if (balanceElement)
+        balanceElement.textContent =
+            currency(balance);
+
+
+    createChart(
+        balance,
         totalExpenses
     );
 
 
-    createLeaveChart(
-        data.leaves.used,
-        remainingLeaves
-    );
-
-
-    loadTasks();
-
-    loadHolidays();
+    loadExpenseList();
 
 }
 
 
 /* =========================================
-   EXPENSE CHART
+   CHART
 ========================================= */
 
 let expenseChart;
 
 
-function createExpenseChart(salary, expenses) {
+function createChart(
+    balance,
+    expensesTotal
+) {
 
     const canvas =
-        document.getElementById("expenseChart");
+        document.getElementById(
+            "expenseChart"
+        );
+
+
+    if (!canvas)
+        return;
 
 
     if (expenseChart)
@@ -232,333 +281,228 @@ function createExpenseChart(salary, expenses) {
 
 
     expenseChart =
-        new Chart(canvas, {
+        new Chart(
+            canvas,
+            {
 
-            type: "doughnut",
+                type: "doughnut",
 
-            data: {
+                data: {
 
-                labels: [
-                    "Remaining",
-                    "Expenses"
-                ],
+                    labels: [
+                        "Remaining",
+                        "Expenses"
+                    ],
 
-                datasets: [
+                    datasets: [
 
-                    {
+                        {
 
-                        data: [
-                            Math.max(0, salary - expenses),
-                            expenses
-                        ],
+                            data: [
+                                balance,
+                                expensesTotal
+                            ],
 
-                        backgroundColor: [
-                            "#32d583",
-                            "#ff5c70"
-                        ],
+                            backgroundColor: [
+                                "#32d583",
+                                "#ff5c70"
+                            ],
 
-                        borderWidth: 0
+                            borderWidth: 0
 
-                    }
+                        }
 
-                ]
+                    ]
 
-            },
+                },
 
-            options: {
+                options: {
 
-                responsive: true,
+                    responsive: true,
 
-                maintainAspectRatio: false,
+                    maintainAspectRatio: false,
 
-                cutout: "72%",
+                    cutout: "72%",
 
-                plugins: {
+                    plugins: {
 
-                    legend: {
-                        display: false
+                        legend: {
+
+                            position: "bottom",
+
+                            labels: {
+
+                                color: "#8b95a7",
+
+                                padding: 20
+
+                            }
+
+                        }
+
                     }
 
                 }
 
             }
-
-        });
-
-}
-
-
-/* =========================================
-   LEAVE CHART
-========================================= */
-
-let leaveChart;
-
-
-function createLeaveChart(used, remaining) {
-
-    const canvas =
-        document.getElementById("leaveChart");
-
-
-    if (leaveChart)
-        leaveChart.destroy();
-
-
-    leaveChart =
-        new Chart(canvas, {
-
-            type: "doughnut",
-
-            data: {
-
-                labels: [
-                    "Used",
-                    "Remaining"
-                ],
-
-                datasets: [
-
-                    {
-
-                        data: [
-                            used,
-                            remaining
-                        ],
-
-                        backgroundColor: [
-                            "#ff5c70",
-                            "#6c63ff"
-                        ],
-
-                        borderWidth: 0
-
-                    }
-
-                ]
-
-            },
-
-            options: {
-
-                responsive: true,
-
-                maintainAspectRatio: false,
-
-                cutout: "72%",
-
-                plugins: {
-
-                    legend: {
-                        display: false
-                    }
-
-                }
-
-            }
-
-        });
+        );
 
 }
 
 
 /* =========================================
-   TASKS
+   HOME EXPENSE LIST
 ========================================= */
 
-function loadTasks() {
+function loadExpenseList() {
 
     const container =
-        document.getElementById("tasksList");
-
-
-    if (!container)
-        return;
-
-
-    container.innerHTML = "";
-
-
-    if (data.tasks.length === 0) {
-
-        container.innerHTML =
-            `<div class="empty">
-                No planned tasks
-            </div>`;
-
-        return;
-
-    }
-
-
-    data.tasks
-        .sort((a, b) =>
-            new Date(a.date) -
-            new Date(b.date)
-        )
-        .forEach(task => {
-
-            container.innerHTML += `
-
-                <div class="list-item">
-
-                    <div class="item-main">
-
-                        <div class="item-icon">
-                            ✓
-                        </div>
-
-                        <div>
-
-                            <div class="item-title">
-                                ${escapeHTML(task.name)}
-                            </div>
-
-                            <div class="item-date">
-                                ${formatDate(task.date)}
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            `;
-
-        });
-
-}
-
-
-/* =========================================
-   HOLIDAYS
-========================================= */
-
-function loadHolidays() {
-
-    const container =
-        document.getElementById("holidaysList");
-
-
-    if (!container)
-        return;
-
-
-    container.innerHTML = "";
-
-
-    if (data.holidays.length === 0) {
-
-        container.innerHTML =
-            `<div class="empty">
-                No holidays added
-            </div>`;
-
-        return;
-
-    }
-
-
-    data.holidays
-        .sort((a, b) =>
-            new Date(a.date) -
-            new Date(b.date)
-        )
-        .forEach(holiday => {
-
-            container.innerHTML += `
-
-                <div class="list-item">
-
-                    <div class="item-main">
-
-                        <div class="item-icon">
-                            📅
-                        </div>
-
-                        <div>
-
-                            <div class="item-title">
-                                ${escapeHTML(holiday.name)}
-                            </div>
-
-                            <div class="item-date">
-                                ${formatDate(holiday.date)}
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            `;
-
-        });
-
-}
-
-
-/* =========================================
-   UPDATE PAGE
-========================================= */
-
-function loadUpdatePage() {
-
-    if (!document.getElementById("salaryInput"))
-        return;
-
-
-    document.getElementById("salaryInput")
-        .value = data.salary;
-
-
-    document.getElementById("totalLeaves")
-        .value = data.leaves.total;
-
-
-    document.getElementById("usedLeavesInput")
-        .value = data.leaves.used;
-
-
-    loadExpensesAdmin();
-
-    loadHolidaysAdmin();
-
-    loadTasksAdmin();
-
-}
-
-
-/* =========================================
-   UPDATE SALARY
-========================================= */
-
-function updateSalary() {
-
-    const value =
-        Number(
-            document.getElementById(
-                "salaryInput"
-            ).value
+        document.getElementById(
+            "expenseList"
         );
 
 
-    if (value < 0) {
+    if (!container)
+        return;
 
-        alert("Enter a valid salary");
+
+    container.innerHTML = "";
+
+
+    const sorted =
+        [...expenses]
+            .sort(
+                (a, b) =>
+                    Number(b.amount) -
+                    Number(a.amount)
+            );
+
+
+    if (sorted.length === 0) {
+
+        container.innerHTML =
+            `
+            <div class="empty">
+                No expenses added yet.
+            </div>
+            `;
 
         return;
 
     }
 
 
-    data.salary = value;
+    sorted.forEach(
+        expense => {
 
-    saveData();
+            container.innerHTML += `
 
-    alert("Salary updated successfully");
+                <div class="list-item">
+
+                    <div class="item-main">
+
+                        <div class="item-icon">
+                            ₹
+                        </div>
+
+                        <div>
+
+                            <div class="item-title">
+                                ${escapeHTML(
+                                    expense.name
+                                )}
+                            </div>
+
+                            <div class="item-date">
+                                ${formatDate(
+                                    expense.date
+                                )}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="item-amount">
+
+                        ${currency(
+                            expense.amount
+                        )}
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+    );
+
+}
+
+
+/* =========================================
+   SAVE SALARY
+========================================= */
+
+document
+    .getElementById(
+        "saveSalary"
+    )
+    ?.addEventListener(
+        "click",
+        async () => {
+
+            const value =
+                Number(
+                    document.getElementById(
+                        "salaryInput"
+                    ).value
+                );
+
+
+            if (value < 0) {
+
+                alert(
+                    "Enter a valid salary."
+                );
+
+                return;
+
+            }
+
+
+            await updateDoc(
+                trackerRef,
+                {
+                    salary: value
+                }
+            );
+
+
+            alert(
+                "Salary saved successfully."
+            );
+
+        }
+    );
+
+
+/* =========================================
+   SET SALARY INPUT
+========================================= */
+
+function updateSalaryInput() {
+
+    const input =
+        document.getElementById(
+            "salaryInput"
+        );
+
+
+    if (input)
+        input.value = salary;
 
 }
 
@@ -568,12 +512,14 @@ function updateSalary() {
 ========================================= */
 
 document
-    .getElementById("expenseForm")
+    .getElementById(
+        "expenseForm"
+    )
     ?.addEventListener(
         "submit",
-        function (e) {
+        async event => {
 
-            e.preventDefault();
+            event.preventDefault();
 
 
             const name =
@@ -585,41 +531,46 @@ document
             const amount =
                 Number(
                     document.getElementById(
-                        "expenseAmountInput"
+                        "expenseAmount"
                     ).value
                 );
 
 
-            if (!name || amount <= 0)
+            if (
+                !name ||
+                amount <= 0
+            )
                 return;
 
 
-            data.expenses.push({
+            await addDoc(
+                expensesRef,
+                {
 
-                id: Date.now(),
+                    name: name,
 
-                name: name,
+                    amount: amount,
 
-                amount: amount
+                    date:
+                        new Date()
+                            .toISOString()
+                            .split("T")[0]
 
-            });
+                }
+            );
 
 
-            saveData();
-
-            this.reset();
-
-            loadExpensesAdmin();
+            event.target.reset();
 
         }
     );
 
 
 /* =========================================
-   EXPENSE ADMIN LIST
+   ADMIN EXPENSE LIST
 ========================================= */
 
-function loadExpensesAdmin() {
+function loadAdminExpenses() {
 
     const container =
         document.getElementById(
@@ -634,38 +585,61 @@ function loadExpensesAdmin() {
     container.innerHTML = "";
 
 
-    data.expenses.forEach(expense => {
+    if (expenses.length === 0) {
 
-        container.innerHTML += `
+        container.innerHTML =
+            `
+            <div class="empty">
+                No expenses yet.
+            </div>
+            `;
 
-            <div class="admin-item">
+        return;
 
-                <div>
+    }
 
-                    <strong>
-                        ${escapeHTML(expense.name)}
-                    </strong>
 
-                    <br>
+    expenses.forEach(
+        expense => {
 
-                    <small>
-                        ${currency(expense.amount)}
-                    </small>
+            container.innerHTML += `
+
+                <div class="admin-item">
+
+                    <div>
+
+                        <strong>
+                            ${escapeHTML(
+                                expense.name
+                            )}
+                        </strong>
+
+                        <br>
+
+                        <small>
+                            ${currency(
+                                expense.amount
+                            )}
+                        </small>
+
+                    </div>
+
+
+                    <button
+                        class="delete-btn"
+                        data-id="${expense.id}"
+                    >
+
+                        Delete
+
+                    </button>
 
                 </div>
 
-                <button
-                    class="delete-btn"
-                    onclick="deleteExpense(${expense.id})"
-                >
-                    Delete
-                </button>
+            `;
 
-            </div>
-
-        `;
-
-    });
+        }
+    );
 
 }
 
@@ -674,349 +648,76 @@ function loadExpensesAdmin() {
    DELETE EXPENSE
 ========================================= */
 
-function deleteExpense(id) {
-
-    data.expenses =
-        data.expenses.filter(
-            item => item.id !== id
-        );
-
-
-    saveData();
-
-    loadExpensesAdmin();
-
-}
-
-
-/* =========================================
-   UPDATE LEAVES
-========================================= */
-
-function updateLeaves() {
-
-    const total =
-        Number(
-            document.getElementById(
-                "totalLeaves"
-            ).value
-        );
-
-
-    const used =
-        Number(
-            document.getElementById(
-                "usedLeavesInput"
-            ).value
-        );
-
-
-    if (
-        total < 0 ||
-        used < 0 ||
-        used > total
-    ) {
-
-        alert(
-            "Used leaves cannot be greater than total leaves."
-        );
-
-        return;
-
-    }
-
-
-    data.leaves = {
-
-        total: total,
-
-        used: used
-
-    };
-
-
-    saveData();
-
-    alert("Leave balance updated");
-
-}
-
-
-/* =========================================
-   ADD HOLIDAY
-========================================= */
-
-document
-    .getElementById("holidayForm")
-    ?.addEventListener(
-        "submit",
-        function (e) {
-
-            e.preventDefault();
-
-
-            const name =
-                document.getElementById(
-                    "holidayName"
-                ).value.trim();
-
-
-            const date =
-                document.getElementById(
-                    "holidayDate"
-                ).value;
-
-
-            if (!name || !date)
-                return;
-
-
-            data.holidays.push({
-
-                id: Date.now(),
-
-                name: name,
-
-                date: date
-
-            });
-
-
-            saveData();
-
-            this.reset();
-
-            loadHolidaysAdmin();
-
-        }
-    );
-
-
-/* =========================================
-   HOLIDAY ADMIN
-========================================= */
-
-function loadHolidaysAdmin() {
-
-    const container =
-        document.getElementById(
-            "holidaysAdmin"
-        );
-
-
-    if (!container)
-        return;
-
-
-    container.innerHTML = "";
-
-
-    data.holidays.forEach(holiday => {
-
-        container.innerHTML += `
-
-            <div class="admin-item">
-
-                <div>
-
-                    <strong>
-                        ${escapeHTML(holiday.name)}
-                    </strong>
-
-                    <br>
-
-                    <small>
-                        ${formatDate(holiday.date)}
-                    </small>
-
-                </div>
-
-                <button
-                    class="delete-btn"
-                    onclick="deleteHoliday(${holiday.id})"
-                >
-                    Delete
-                </button>
-
-            </div>
-
-        `;
-
-    });
-
-}
-
-
-/* =========================================
-   DELETE HOLIDAY
-========================================= */
-
-function deleteHoliday(id) {
-
-    data.holidays =
-        data.holidays.filter(
-            item => item.id !== id
-        );
-
-
-    saveData();
-
-    loadHolidaysAdmin();
-
-}
-
-
-/* =========================================
-   ADD TASK
-========================================= */
-
-document
-    .getElementById("taskForm")
-    ?.addEventListener(
-        "submit",
-        function (e) {
-
-            e.preventDefault();
-
-
-            const name =
-                document.getElementById(
-                    "taskName"
-                ).value.trim();
-
-
-            const date =
-                document.getElementById(
-                    "taskDate"
-                ).value;
-
-
-            if (!name || !date)
-                return;
-
-
-            data.tasks.push({
-
-                id: Date.now(),
-
-                name: name,
-
-                date: date
-
-            });
-
-
-            saveData();
-
-            this.reset();
-
-            loadTasksAdmin();
-
-        }
-    );
-
-
-/* =========================================
-   TASK ADMIN
-========================================= */
-
-function loadTasksAdmin() {
-
-    const container =
-        document.getElementById(
-            "tasksAdmin"
-        );
-
-
-    if (!container)
-        return;
-
-
-    container.innerHTML = "";
-
-
-    data.tasks.forEach(task => {
-
-        container.innerHTML += `
-
-            <div class="admin-item">
-
-                <div>
-
-                    <strong>
-                        ${escapeHTML(task.name)}
-                    </strong>
-
-                    <br>
-
-                    <small>
-                        ${formatDate(task.date)}
-                    </small>
-
-                </div>
-
-                <button
-                    class="delete-btn"
-                    onclick="deleteTask(${task.id})"
-                >
-                    Delete
-                </button>
-
-            </div>
-
-        `;
-
-    });
-
-}
-
-
-/* =========================================
-   DELETE TASK
-========================================= */
-
-function deleteTask(id) {
-
-    data.tasks =
-        data.tasks.filter(
-            item => item.id !== id
-        );
-
-
-    saveData();
-
-    loadTasksAdmin();
-
-}
-
-
-/* =========================================
-   BASIC HTML SECURITY
-========================================= */
-
-function escapeHTML(value) {
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-}
-
-
-/* =========================================
-   INITIALIZE
-========================================= */
-
 document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+    "click",
+    async event => {
 
-        loadHome();
+        const button =
+            event.target.closest(
+                ".delete-btn"
+            );
 
-        loadUpdatePage();
+
+        if (!button)
+            return;
+
+
+        const id =
+            button.dataset.id;
+
+
+        const confirmDelete =
+            confirm(
+                "Delete this expense?"
+            );
+
+
+        if (!confirmDelete)
+            return;
+
+
+        await deleteDoc(
+            doc(
+                db,
+                "tracker",
+                "main",
+                "expenses",
+                id
+            )
+        );
 
     }
 );
+
+
+/* =========================================
+   CURRENT DATE
+========================================= */
+
+const dateElement =
+    document.getElementById(
+        "currentDate"
+    );
+
+
+if (dateElement) {
+
+    dateElement.textContent =
+        new Date().toLocaleDateString(
+            "en-IN",
+            {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            }
+        );
+
+}
+
+
+/* =========================================
+   START
+========================================= */
+
+initialize();
