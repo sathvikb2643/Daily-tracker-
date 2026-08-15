@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Daily Tracker</title>
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Expense Tracker</title>
 
     <link rel="stylesheet" href="style.css">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 
 <body>
@@ -16,13 +21,25 @@
 <header class="navbar">
 
     <a href="index.html" class="logo">
-        <div class="logo-icon">DT</div>
-        <span>Daily Tracker</span>
+
+        <div class="logo-icon">
+            ET
+        </div>
+
+        <span>Expense Tracker</span>
+
     </a>
 
     <nav>
-        <a href="index.html" class="active">Home</a>
-        <a href="update.html">Update</a>
+
+        <a href="index.html" class="active">
+            Home
+        </a>
+
+        <a href="update.html">
+            Update
+        </a>
+
     </nav>
 
 </header>
@@ -31,11 +48,17 @@
 <main class="container">
 
     <section class="welcome">
-        <div>
-            <p class="small-title">PERSONAL DASHBOARD</p>
-            <h1>Good day 👋</h1>
-            <p id="currentDate"></p>
-        </div>
+
+        <p class="label">
+            PERSONAL FINANCE
+        </p>
+
+        <h1>
+            My Expenses
+        </h1>
+
+        <p id="currentDate"></p>
+
     </section>
 
 
@@ -44,146 +67,110 @@
     <section class="summary-grid">
 
         <div class="summary-card">
-            <span>Salary</span>
-            <strong id="salaryAmount">₹0</strong>
+
+            <span>
+                Monthly Salary
+            </span>
+
+            <strong id="salaryAmount">
+                ₹0
+            </strong>
+
         </div>
 
-        <div class="summary-card">
-            <span>Expenses</span>
-            <strong id="expenseAmount">₹0</strong>
-        </div>
 
         <div class="summary-card">
-            <span>Remaining</span>
-            <strong id="remainingAmount">₹0</strong>
+
+            <span>
+                Total Expenses
+            </span>
+
+            <strong id="expenseAmount">
+                ₹0
+            </strong>
+
         </div>
 
+
         <div class="summary-card">
-            <span>Tasks</span>
-            <strong id="taskCount">0</strong>
+
+            <span>
+                Remaining
+            </span>
+
+            <strong id="balanceAmount">
+                ₹0
+            </strong>
+
         </div>
 
     </section>
 
 
-    <!-- CHARTS -->
+    <!-- CHART + BREAKDOWN -->
 
     <section class="dashboard-grid">
 
+
         <div class="card chart-card">
 
-            <div class="card-header">
-                <div>
-                    <p class="label">MONEY</p>
-                    <h2>Salary & Expenses</h2>
-                </div>
-            </div>
+            <p class="label">
+                OVERVIEW
+            </p>
+
+            <h2>
+                Salary & Expenses
+            </h2>
 
             <div class="chart-container">
+
                 <canvas id="expenseChart"></canvas>
-            </div>
 
-            <div class="chart-info">
-                <div>
-                    <span class="dot salary-dot"></span>
-                    Salary
-                    <strong id="chartSalary">₹0</strong>
-                </div>
-
-                <div>
-                    <span class="dot expense-dot"></span>
-                    Expenses
-                    <strong id="chartExpenses">₹0</strong>
-                </div>
             </div>
 
         </div>
 
 
-        <div class="card chart-card">
+        <div class="card">
 
             <div class="card-header">
-                <div>
-                    <p class="label">LEAVE</p>
-                    <h2>Leave Balance</h2>
-                </div>
-            </div>
-
-            <div class="chart-container">
-                <canvas id="leaveChart"></canvas>
-            </div>
-
-            <div class="leave-center">
-                <strong id="remainingLeaves">0</strong>
-                <span>Days Left</span>
-            </div>
-
-            <div class="chart-info">
 
                 <div>
-                    <span class="dot leave-used-dot"></span>
-                    Used
-                    <strong id="usedLeaves">0</strong>
+
+                    <p class="label">
+                        BREAKDOWN
+                    </p>
+
+                    <h2>
+                        Expenses
+                    </h2>
+
                 </div>
 
-                <div>
-                    <span class="dot leave-left-dot"></span>
-                    Remaining
-                    <strong id="leaveLeftText">0</strong>
-                </div>
+                <a href="update.html"
+                   class="small-btn">
+                    + Add
+                </a>
 
+            </div>
+
+
+            <div id="expenseList"
+                 class="items-list">
             </div>
 
         </div>
 
     </section>
 
-
-    <!-- LISTS -->
-
-    <section class="lists-grid">
-
-        <!-- TASKS -->
-
-        <div class="card list-card">
-
-            <div class="card-header">
-                <div>
-                    <p class="label">PRODUCTIVITY</p>
-                    <h2>Planned Tasks</h2>
-                </div>
-
-                <a href="update.html" class="small-btn">+ Add</a>
-            </div>
-
-            <div id="tasksList" class="items-list"></div>
-
-        </div>
-
-
-        <!-- HOLIDAYS -->
-
-        <div class="card list-card">
-
-            <div class="card-header">
-                <div>
-                    <p class="label">CALENDAR</p>
-                    <h2>Upcoming Holidays</h2>
-                </div>
-
-                <a href="update.html" class="small-btn">+ Add</a>
-            </div>
-
-            <div id="holidaysList" class="items-list"></div>
-
-        </div>
-
-    </section>
 
 </main>
 
 
-<script src="app.js"></script>
+<script type="module"
+        src="app.js">
+</script>
 
 </body>
+
 </html>
