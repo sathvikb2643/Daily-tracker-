@@ -4,9 +4,11 @@
 <head>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Update - Daily Tracker</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Update - Expense Tracker</title>
 
     <link rel="stylesheet" href="style.css">
 
@@ -14,16 +16,30 @@
 
 <body>
 
+
 <header class="navbar">
 
     <a href="index.html" class="logo">
-        <div class="logo-icon">DT</div>
-        <span>Daily Tracker</span>
+
+        <div class="logo-icon">
+            ET
+        </div>
+
+        <span>Expense Tracker</span>
+
     </a>
 
+
     <nav>
-        <a href="index.html">Home</a>
-        <a href="update.html" class="active">Update</a>
+
+        <a href="index.html">
+            Home
+        </a>
+
+        <a href="update.html" class="active">
+            Update
+        </a>
+
     </nav>
 
 </header>
@@ -31,13 +47,20 @@
 
 <main class="container">
 
+
     <section class="welcome">
 
-        <div>
-            <p class="small-title">MANAGE DATA</p>
-            <h1>Update Tracker</h1>
-            <p>Add, edit or remove your daily information.</p>
-        </div>
+        <p class="label">
+            MANAGE
+        </p>
+
+        <h1>
+            Update Expenses
+        </h1>
+
+        <p>
+            Add or remove your expenses.
+        </p>
 
     </section>
 
@@ -47,28 +70,46 @@
     <section class="update-card">
 
         <div class="section-title">
+
             <div>
-                <p class="label">FINANCE</p>
-                <h2>Salary</h2>
+
+                <p class="label">
+                    INCOME
+                </p>
+
+                <h2>
+                    Monthly Salary
+                </h2>
+
             </div>
+
         </div>
+
 
         <div class="form-row">
 
             <div class="input-group">
 
-                <label>Monthly Salary</label>
+                <label>
+                    Salary
+                </label>
 
                 <input
                     type="number"
                     id="salaryInput"
-                    placeholder="Example: 35000"
+                    placeholder="35000"
+                    min="0"
                 >
 
             </div>
 
-            <button onclick="updateSalary()" class="primary-btn">
+
+            <button
+                id="saveSalary"
+                class="primary-btn">
+
                 Save Salary
+
             </button>
 
         </div>
@@ -76,25 +117,36 @@
     </section>
 
 
-    <!-- EXPENSES -->
+    <!-- ADD EXPENSE -->
 
     <section class="update-card">
 
         <div class="section-title">
 
             <div>
-                <p class="label">FINANCE</p>
-                <h2>Expenses</h2>
+
+                <p class="label">
+                    EXPENSE
+                </p>
+
+                <h2>
+                    Add Expense
+                </h2>
+
             </div>
 
         </div>
 
 
-        <form id="expenseForm" class="form-row">
+        <form id="expenseForm"
+              class="form-row">
+
 
             <div class="input-group">
 
-                <label>Expense Name</label>
+                <label>
+                    Expense Name
+                </label>
 
                 <input
                     type="text"
@@ -108,12 +160,15 @@
 
             <div class="input-group">
 
-                <label>Amount</label>
+                <label>
+                    Amount
+                </label>
 
                 <input
                     type="number"
-                    id="expenseAmountInput"
+                    id="expenseAmount"
                     placeholder="500"
+                    min="1"
                     required
                 >
 
@@ -121,181 +176,51 @@
 
 
             <button class="primary-btn">
+
                 Add Expense
+
             </button>
 
+
         </form>
-
-
-        <div id="expensesAdmin" class="admin-list"></div>
 
     </section>
 
 
-    <!-- LEAVES -->
+    <!-- EXPENSE LIST -->
 
     <section class="update-card">
 
         <div class="section-title">
 
             <div>
-                <p class="label">WORK</p>
-                <h2>Leaves</h2>
+
+                <p class="label">
+                    MANAGE
+                </p>
+
+                <h2>
+                    Your Expenses
+                </h2>
+
             </div>
 
         </div>
 
 
-        <div class="form-row">
-
-            <div class="input-group">
-
-                <label>Total Leaves</label>
-
-                <input
-                    type="number"
-                    id="totalLeaves"
-                    min="0"
-                >
-
-            </div>
-
-
-            <div class="input-group">
-
-                <label>Used Leaves</label>
-
-                <input
-                    type="number"
-                    id="usedLeavesInput"
-                    min="0"
-                >
-
-            </div>
-
-
-            <button onclick="updateLeaves()" class="primary-btn">
-                Save Leaves
-            </button>
-
+        <div id="expensesAdmin"
+             class="admin-list">
         </div>
 
     </section>
 
-
-    <!-- HOLIDAYS -->
-
-    <section class="update-card">
-
-        <div class="section-title">
-
-            <div>
-                <p class="label">CALENDAR</p>
-                <h2>Holidays</h2>
-            </div>
-
-        </div>
-
-
-        <form id="holidayForm" class="form-row">
-
-            <div class="input-group">
-
-                <label>Holiday Name</label>
-
-                <input
-                    type="text"
-                    id="holidayName"
-                    placeholder="Independence Day"
-                    required
-                >
-
-            </div>
-
-
-            <div class="input-group">
-
-                <label>Date</label>
-
-                <input
-                    type="date"
-                    id="holidayDate"
-                    required
-                >
-
-            </div>
-
-
-            <button class="primary-btn">
-                Add Holiday
-            </button>
-
-        </form>
-
-
-        <div id="holidaysAdmin" class="admin-list"></div>
-
-    </section>
-
-
-    <!-- TASKS -->
-
-    <section class="update-card">
-
-        <div class="section-title">
-
-            <div>
-                <p class="label">PRODUCTIVITY</p>
-                <h2>Planned Tasks</h2>
-            </div>
-
-        </div>
-
-
-        <form id="taskForm" class="form-row">
-
-            <div class="input-group">
-
-                <label>Task</label>
-
-                <input
-                    type="text"
-                    id="taskName"
-                    placeholder="Complete Python practice"
-                    required
-                >
-
-            </div>
-
-
-            <div class="input-group">
-
-                <label>Date</label>
-
-                <input
-                    type="date"
-                    id="taskDate"
-                    required
-                >
-
-            </div>
-
-
-            <button class="primary-btn">
-                Add Task
-            </button>
-
-        </form>
-
-
-        <div id="tasksAdmin" class="admin-list"></div>
-
-    </section>
 
 </main>
 
 
-<script src="app.js"></script>
+<script type="module"
+        src="app.js">
+</script>
 
 </body>
 
